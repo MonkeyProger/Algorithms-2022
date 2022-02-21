@@ -2,6 +2,8 @@
 
 package lesson2
 
+import kotlin.math.sqrt
+
 /**
  * Получение наибольшей прибыли (она же -- поиск максимального подмассива)
  * Простая
@@ -95,8 +97,26 @@ fun josephTask(menNumber: Int, choiceInterval: Int): Int {
  * вернуть ту из них, которая встречается раньше в строке first.
  */
 fun longestCommonSubstring(first: String, second: String): String {
-    TODO()
+    val a = first.length
+    val b = second.length
+    var max = 0
+    var index = first.length
+    val lcsArray = Array(a) { Array(b) { 0 } }
+    for (i in 1 until a) {
+        for (j in 1 until b) {
+            if (first[i - 1] == second[j - 1]) {
+                lcsArray[i][j] = lcsArray[i - 1][j - 1] + 1
+                if (max < lcsArray[i][j]) {
+                    index = i
+                    max = lcsArray[i][j]
+                }
+            }
+        }
+    }
+    return first.substring(index - max, index)
 }
+//T(n)=O(a*b), a=first.length, b=second.length
+//R(n)=O(a*b)
 
 /**
  * Число простых чисел в интервале
@@ -109,5 +129,23 @@ fun longestCommonSubstring(first: String, second: String): String {
  * Единица простым числом не считается.
  */
 fun calcPrimesNumber(limit: Int): Int {
-    TODO()
+    var res = 0
+    if (limit <= 1) return 0
+    val primeArray = Array(limit + 1) { true }
+    primeArray[0] = false
+    primeArray[1] = false
+    for (i in 2..sqrt(limit.toDouble()).toInt()) { //  n/2 + n/3 + n/5 + n/7 +....
+        if (primeArray[i]) {                       //  n*(1/2 + 1/3 + ...)
+            for (j in i * i..limit step i) {       // По доказательству Эйлера для ряда обратных простых чисел, второй
+                primeArray[j] = false              // множитель становится равен loglogn
+            }
+        }
+    }
+    for (i in 2..limit) {
+        if (primeArray[i])
+            res++
+    }
+    return res
 }
+// T(n) = O(n*loglogn)
+// R(n) = O(n)
