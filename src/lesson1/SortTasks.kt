@@ -3,6 +3,7 @@
 package lesson1
 
 import java.io.File
+import java.util.*
 
 /**
  * Сортировка времён
@@ -99,52 +100,27 @@ fun sortAddresses(inputName: String, outputName: String) {
  * 121.3
  */
 fun sortTemperatures(inputName: String, outputName: String) {
-    val source = mutableListOf<Number>()
+    val map = TreeMap<Float, Int>()
     val file = File(inputName)
     if (file.length() == 0L) {
-        File(outputName).bufferedWriter().use { out ->
-            out.write("")
-        }
+        File(outputName).bufferedWriter().use { out -> out.write("") }
     } else {
         file.bufferedReader().use {
             it.forEachLine { line ->
-                if (line.matches(Regex("-?\\d{1,3}\\.\\d")))
-                    source.add(line.toFloat())
+                if (line.matches(Regex("-?\\d{1,3}\\.\\d"))) {
+                    val fl = line.toFloat()
+                    map.putIfAbsent(fl, 0)
+                    map[fl] = map[fl]!! + 1
+                }
             }
         }
-        mNumberSort(source, 0, source.size)
         File(outputName).bufferedWriter().use {
-            for (i in source) {
-                it.write("$i\n")
-            }
+            map.forEach { el -> for (i in 1..el.value) it.write("${el.key}\n") }
         }
     }
 }
-// T(n)=O(n*log(n))
+// T(n)=O(n)
 // R(n)=O(n)
-
-fun mNumberSort(elements: MutableList<Number>, begin: Int, end: Int) {
-    if (end - begin <= 1) return
-    val middle = (begin + end) / 2
-    mNumberSort(elements, begin, middle)
-    mNumberSort(elements, middle, end)
-    mergeNumber(elements, begin, middle, end)
-}
-
-fun mergeNumber(elements: MutableList<Number>, begin: Int, middle: Int, end: Int) {
-    val left = elements.subList(begin, middle).toList()
-    val right = elements.subList(middle, end).toList()
-    var li = 0
-    var ri = 0
-    for (i in begin until end) {
-        if (li < left.size && (ri == right.size || left[li].toFloat() <= right[ri].toFloat())) {
-            elements[i] = left[li++]
-        } else {
-            elements[i] = right[ri++]
-        }
-    }
-}
-
 
 /**
  * Сортировка последовательности
@@ -178,18 +154,15 @@ fun mergeNumber(elements: MutableList<Number>, begin: Int, middle: Int, end: Int
 fun sortSequence(inputName: String, outputName: String) {
     val file = File(inputName)
     if (file.length() == 0L) {
-        File(outputName).bufferedWriter().use { out ->
-            out.write("")
-        }
+        File(outputName).bufferedWriter().use { out -> out.write("") }
     } else {
         val numMap = mutableMapOf<Int, Int>()
         val list = mutableListOf<Int>()
         file.forEachLine {
             val num = it.toInt()
             list.add(num)
-            if (!numMap.containsKey(num))
-                numMap[num] = 1 else
-                numMap[num] = numMap[it.toInt()]!! + 1
+            numMap.getOrPut(num) { 0 }
+            numMap[num] = numMap[num]!! + 1
         }
 
         var res = Pair(-1, -1)
