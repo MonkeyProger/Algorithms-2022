@@ -1,6 +1,8 @@
 package lesson3
 
+import java.lang.IllegalStateException
 import java.util.*
+import kotlin.NoSuchElementException
 import kotlin.math.max
 
 // attention: Comparable is supported but Comparator is not
@@ -9,8 +11,21 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
     private class Node<T>(
         val value: T
     ) {
+        var parent: Node<T>? = null
         var left: Node<T>? = null
         var right: Node<T>? = null
+
+        fun setParentTo(parent: Node<T>?) {
+            this.parent = parent
+        }
+
+        fun setRightChild(right: Node<T>?) {
+            this.right = right
+        }
+
+        fun setLeftChild(left: Node<T>?) {
+            this.left = left
+        }
     }
 
     private var root: Node<T>? = null
@@ -25,8 +40,14 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
         val comparison = value.compareTo(start.value)
         return when {
             comparison == 0 -> start
-            comparison < 0 -> start.left?.let { find(it, value) } ?: start
-            else -> start.right?.let { find(it, value) } ?: start
+            comparison < 0 -> {
+                start.left?.parent = start
+                start.left?.let { find(it, value) } ?: start
+            }
+            else -> {
+                start.right?.parent = start
+                start.right?.let { find(it, value) } ?: start
+            }
         }
     }
 
@@ -52,6 +73,7 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
             return false
         }
         val newNode = Node(element)
+        newNode.setParentTo(closest)
         when {
             closest == null -> root = newNode
             comparison < 0 -> {
@@ -90,6 +112,27 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
         BinarySearchTreeIterator()
 
     inner class BinarySearchTreeIterator internal constructor() : MutableIterator<T> {
+        private var index = -1
+        private var list = mutableListOf<Node<T>>()
+        private var removeCounter = false
+        private var curPos = root
+
+        init {
+            traversed()
+        }
+
+        private fun traversed() {
+            list = mutableListOf()
+            traverse(root)
+        }
+
+        private fun traverse(root: Node<T>?) {
+            if (root != null) {
+                root.left?.let { traverse(it) }
+                list.add(root)
+                root.right?.let { traverse(it) }
+            }
+        }
 
         /**
          * Проверка наличия следующего элемента
@@ -102,8 +145,9 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
          * Средняя
          */
         override fun hasNext(): Boolean {
-            // TODO
-            throw NotImplementedError()
+            if (index + 1 >= size)
+                return false
+            return true
         }
 
         /**
@@ -119,10 +163,15 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
          *
          * Средняя
          */
+
         override fun next(): T {
-            // TODO
-            throw NotImplementedError()
+            index++
+            removeCounter = true
+            if (index >= size) throw NoSuchElementException()
+            curPos = find(list[index].value)
+            return list[index].value
         }
+        //T(O)=O(n)
 
         /**
          * Удаление предыдущего элемента
@@ -137,10 +186,64 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
          * Сложная
          */
         override fun remove() {
-            // TODO
-            throw NotImplementedError()
+            curPos?.let { remove(it) }
+            list.remove(curPos)
         }
+        //T(O)=O(n)
 
+        private fun remove(node: Node<T>) {
+            if (!removeCounter) throw IllegalStateException() else {
+                removeCounter = false
+                index--
+                size--
+                if (node.left == null && node.right == null)
+                    if (node == root) delNode(node, null, null) else
+                        delNode(node, null, node.parent)
+                else if (node.left == null) delNode(node, node.right, node.parent)
+                else if (node.right == null) delNode(node, node.left, node.parent)
+                else {
+                    val maxInLeftChild = maxInBranch(node.left!!)
+                    val parent = node.parent
+
+                    if (maxInLeftChild != node.left) {
+                        maxInLeftChild.parent?.setRightChild(null)
+                        node.left!!.setParentTo(maxInLeftChild)
+                        maxInLeftChild.setLeftChild(node.left!!)
+                    }
+                    maxInLeftChild.setRightChild(node.right!!)
+                    node.right!!.setParentTo(maxInLeftChild)
+                    if (parent != null) {
+                        if (parent.value < maxInLeftChild.value) parent.setRightChild(maxInLeftChild)
+                        else parent.setLeftChild(maxInLeftChild)
+                        maxInLeftChild.parent = parent
+                    }
+                    if (node == root) {
+                        maxInLeftChild.parent = null
+                        root = maxInLeftChild
+                    }
+                    node.setParentTo(null)
+                    node.setLeftChild(null)
+                    node.setRightChild(null)
+                }
+            }
+        }
+    }
+
+    private fun maxInBranch(node: Node<T>): Node<T> {
+        var current = node
+        while (current.right != null) {
+            current = current.right!!
+        }
+        return current
+    }
+
+    private fun delNode(node: Node<T>, to: Node<T>?, parent: Node<T>?) {
+        if (parent == null) {
+            root = to
+            return
+        }
+        if (parent.value > node.value) parent.setLeftChild(to)
+        else parent.setRightChild(to)
     }
 
     /**

@@ -45,6 +45,11 @@ class KtBinarySearchTreeTest : AbstractBinarySearchTreeTest() {
     }
 
     @Test
+    fun myTest() {
+        bsTreeIteratorRemoveTest()
+    }
+
+    @Test
     @Tag("5")
     fun subSetTest() {
         doSubSetTest()

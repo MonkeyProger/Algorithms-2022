@@ -274,6 +274,40 @@ abstract class AbstractBinarySearchTreeTest {
         }
     }
 
+    protected fun bsTreeIteratorRemoveTest() {
+        val bsTree = KtBinarySearchTree<Int>()
+        bsTree.add(75); bsTree.add(34); bsTree.add(98); bsTree.add(15)
+        bsTree.add(50); bsTree.add(45); bsTree.add(44); bsTree.add(46)
+        bsTree.add(60); bsTree.add(70); bsTree.add(94); bsTree.add(95)
+        bsTree.add(101); bsTree.add(100)
+
+        val treeIter = bsTree.iterator()
+        while (treeIter.hasNext()) {
+            val curr = treeIter.next()
+            print("$curr ")
+        }
+        println()
+
+        val delIter = bsTree.iterator()
+        while (delIter.hasNext()) {
+            val curr = delIter.next()
+            if (curr == 15 || curr == 50 || curr == 75 || curr == 94 || curr == 101) {
+                delIter.remove()
+                println(curr)
+            }
+        }
+        val chIter = bsTree.iterator()
+        val controlList = listOf(34, 44, 45, 46, 60, 70, 95, 98, 100)
+        var i = 0
+        println()
+        while (chIter.hasNext()) {
+            val cur = chIter.next()
+            print("$cur ")
+            assertTrue { cur == controlList[i] }
+            i++
+        }
+    }
+
     protected fun doSubSetTest() {
         implementationTest { create().subSet(0, 0) }
         assertEquals(
