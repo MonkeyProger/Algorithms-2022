@@ -14,18 +14,6 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
         var parent: Node<T>? = null
         var left: Node<T>? = null
         var right: Node<T>? = null
-
-        fun setParentTo(parent: Node<T>?) {
-            this.parent = parent
-        }
-
-        fun setRightChild(right: Node<T>?) {
-            this.right = right
-        }
-
-        fun setLeftChild(left: Node<T>?) {
-            this.left = left
-        }
     }
 
     private var root: Node<T>? = null
@@ -73,7 +61,7 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
             return false
         }
         val newNode = Node(element)
-        newNode.setParentTo(closest)
+        newNode.parent = closest
         when {
             closest == null -> root = newNode
             comparison < 0 -> {
@@ -113,26 +101,8 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
 
     inner class BinarySearchTreeIterator internal constructor() : MutableIterator<T> {
         private var index = -1
-        private var list = mutableListOf<Node<T>>()
         private var removeCounter = false
         private var curPos = root
-
-        init {
-            traversed()
-        }
-
-        private fun traversed() {
-            list = mutableListOf()
-            traverse(root)
-        }
-
-        private fun traverse(root: Node<T>?) {
-            if (root != null) {
-                root.left?.let { traverse(it) }
-                list.add(root)
-                root.right?.let { traverse(it) }
-            }
-        }
 
         /**
          * Проверка наличия следующего элемента
@@ -168,10 +138,28 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
             index++
             removeCounter = true
             if (index >= size) throw NoSuchElementException()
-            curPos = find(list[index].value)
-            return list[index].value
+            if (curPos != null) {
+                return if (index == 0) {
+                    curPos = minInBranch(curPos!!)
+                    curPos!!.value
+                } else nextPos()
+            } else throw NoSuchElementException()
         }
-        //T(O)=O(n)
+        //T(O) = O(height)
+
+        private fun nextPos(): T {
+            var next = root
+            var closest = root
+            while (closest != null && !hasNoChildren(closest)) {
+                closest = if (closest.value > curPos!!.value) closest.left else closest.right
+                if (closest != null && continuable(closest, curPos!!, next!!)) next = closest
+            }
+            curPos = next
+            return curPos!!.value
+        }
+
+        private fun continuable(closest: Node<T>, curPos: Node<T>, nextNode: Node<T>) =
+            closest.value > curPos.value && closest.value < nextNode.value || nextNode.right == closest
 
         /**
          * Удаление предыдущего элемента
@@ -187,64 +175,83 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
          */
         override fun remove() {
             curPos?.let { remove(it) }
-            list.remove(curPos)
         }
-        //T(O)=O(n)
+        //T(O)=O(height)
 
         private fun remove(node: Node<T>) {
-            if (!removeCounter) throw IllegalStateException() else {
-                removeCounter = false
-                index--
-                size--
-                if (node.left == null && node.right == null)
-                    if (node == root) delNode(node, null, null) else
-                        delNode(node, null, node.parent)
-                else if (node.left == null) delNode(node, node.right, node.parent)
-                else if (node.right == null) delNode(node, node.left, node.parent)
-                else {
+            if (!removeCounter) throw IllegalStateException()
+            val parent = node.parent
+            removeCounter = false
+            index--
+            size--
+            when {
+                hasNoChildren(node) -> if (node == root) delNode(node, null, null) else
+                    delNode(node, null, parent)
+                node.left == null -> delNode(node, node.right, parent)
+                node.right == null -> delNode(node, node.left, parent)
+                else -> {
                     val maxInLeftChild = maxInBranch(node.left!!)
-                    val parent = node.parent
 
                     if (maxInLeftChild != node.left) {
-                        maxInLeftChild.parent?.setRightChild(null)
-                        node.left!!.setParentTo(maxInLeftChild)
-                        maxInLeftChild.setLeftChild(node.left!!)
+                        maxInLeftChild.parent?.right = maxInLeftChild.left
+                        if (maxInLeftChild.left != null)
+                            maxInLeftChild.parent = maxInLeftChild.parent
+                        node.left!!.parent = maxInLeftChild
+                        maxInLeftChild.left = node.left!!
                     }
-                    maxInLeftChild.setRightChild(node.right!!)
-                    node.right!!.setParentTo(maxInLeftChild)
+                    maxInLeftChild.right = node.right!!
+                    node.right!!.parent = maxInLeftChild
+
+                    maxInLeftChild.parent = parent
                     if (parent != null) {
-                        if (parent.value < maxInLeftChild.value) parent.setRightChild(maxInLeftChild)
-                        else parent.setLeftChild(maxInLeftChild)
-                        maxInLeftChild.parent = parent
-                    }
-                    if (node == root) {
-                        maxInLeftChild.parent = null
-                        root = maxInLeftChild
-                    }
-                    node.setParentTo(null)
-                    node.setLeftChild(null)
-                    node.setRightChild(null)
+                        if (parent.value < maxInLeftChild.value) parent.right = maxInLeftChild
+                        else parent.left = maxInLeftChild
+                    } else root = maxInLeftChild
+
+                    node.parent = null
+                    node.left = null
+                    node.right = null
+                    curPos = maxInLeftChild
+                }
+            }
+        }
+
+        private fun hasNoChildren(node: Node<T>) = node.left == null && node.right == null
+
+        private fun minInBranch(node: Node<T>): Node<T> {
+            var current = node
+            while (current.left != null) {
+                current = current.left!!
+            }
+            return current
+        }
+
+        private fun maxInBranch(node: Node<T>): Node<T> {
+            var current = node
+            while (current.right != null) {
+                current = current.right!!
+            }
+            return current
+        }
+
+        private fun delNode(node: Node<T>, to: Node<T>?, parent: Node<T>?) {
+            if (parent == null) {
+                root = to
+                curPos = to
+                return
+            } else {
+                to?.parent = parent
+                if (parent.value > node.value) {
+                    parent.left = to
+                    curPos = parent
+                } else {
+                    parent.right = to
+                    curPos = parent
                 }
             }
         }
     }
 
-    private fun maxInBranch(node: Node<T>): Node<T> {
-        var current = node
-        while (current.right != null) {
-            current = current.right!!
-        }
-        return current
-    }
-
-    private fun delNode(node: Node<T>, to: Node<T>?, parent: Node<T>?) {
-        if (parent == null) {
-            root = to
-            return
-        }
-        if (parent.value > node.value) parent.setLeftChild(to)
-        else parent.setRightChild(to)
-    }
 
     /**
      * Подмножество всех элементов в диапазоне [fromElement, toElement)

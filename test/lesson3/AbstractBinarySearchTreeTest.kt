@@ -278,7 +278,7 @@ abstract class AbstractBinarySearchTreeTest {
         val bsTree = KtBinarySearchTree<Int>()
         bsTree.add(75); bsTree.add(34); bsTree.add(98); bsTree.add(15)
         bsTree.add(50); bsTree.add(45); bsTree.add(44); bsTree.add(46)
-        bsTree.add(60); bsTree.add(70); bsTree.add(94); bsTree.add(95)
+        bsTree.add(60); bsTree.add(70); bsTree.add(65); bsTree.add(94); bsTree.add(95)
         bsTree.add(101); bsTree.add(100)
 
         val treeIter = bsTree.iterator()
@@ -297,7 +297,7 @@ abstract class AbstractBinarySearchTreeTest {
             }
         }
         val chIter = bsTree.iterator()
-        val controlList = listOf(34, 44, 45, 46, 60, 70, 95, 98, 100)
+        val controlList = listOf(34, 44, 45, 46, 60, 65, 70, 95, 98, 100)
         var i = 0
         println()
         while (chIter.hasNext()) {
