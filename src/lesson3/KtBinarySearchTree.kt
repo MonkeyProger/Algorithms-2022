@@ -103,6 +103,7 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
         private var index = -1
         private var removeCounter = false
         private var curPos = root
+        private var parentDeque = ArrayDeque<Node<T>>()
 
         /**
          * Проверка наличия следующего элемента
@@ -140,26 +141,35 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
             if (index >= size) throw NoSuchElementException()
             if (curPos != null) {
                 return if (index == 0) {
-                    curPos = minInBranch(curPos!!)
+                    curPos = minInBranchWithSave(curPos!!)
                     curPos!!.value
                 } else nextPos()
             } else throw NoSuchElementException()
         }
-        //T(O) = O(height)
+        // * T(n) = O(n) трудоемкость не больше O(height),
+        // где height в худшем случае равна n. Худший случай - дерево из всех левых элементов.
+        // * При полном прохождении дерева операция занимает O(n)
+        // ======================================================
+        // * По пути к минимальному элементу промежуточные левые узлы сохраняются в стек parentDeque,
+        // для быстрого возврата при достижении максимального значения в конкретной ветке.
+        // * Максимальное значение этого стека равно n в худшем случае.
+        // Худший случай - дерево из всех левых элементов. Аналогично R(n) = O(n)
 
         private fun nextPos(): T {
-            var next = root
-            var closest = root
-            while (closest != null && !hasNoChildren(closest)) {
-                closest = if (closest.value > curPos!!.value) closest.left else closest.right
-                if (closest != null && continuable(closest, curPos!!, next!!)) next = closest
-            }
-            curPos = next
+            if (curPos!!.right != null) {
+                curPos = minInBranchWithSave(curPos!!.right!!)
+            } else if (parentDeque.isNotEmpty()) curPos = parentDeque.pop()
             return curPos!!.value
         }
 
-        private fun continuable(closest: Node<T>, curPos: Node<T>, nextNode: Node<T>) =
-            closest.value > curPos.value && closest.value < nextNode.value || nextNode.right == closest
+        private fun minInBranchWithSave(node: Node<T>): Node<T> {
+            var current = node
+            while (current.left != null) {
+                parentDeque.push(current)
+                current = current.left!!
+            }
+            return current
+        }
 
         /**
          * Удаление предыдущего элемента
@@ -176,7 +186,7 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
         override fun remove() {
             curPos?.let { remove(it) }
         }
-        //T(O)=O(height)
+        // * T(n)=O(n) худший случай: root->root.left->root.left((.right)*(n-2))
 
         private fun remove(node: Node<T>) {
             if (!removeCounter) throw IllegalStateException()
@@ -214,17 +224,10 @@ class KtBinarySearchTree<T : Comparable<T>> : AbstractMutableSet<T>(), Checkable
                     curPos = maxInLeftChild
                 }
             }
+            if (parentDeque.isNotEmpty() && curPos!! == parentDeque.first) parentDeque.removeFirst()
         }
 
         private fun hasNoChildren(node: Node<T>) = node.left == null && node.right == null
-
-        private fun minInBranch(node: Node<T>): Node<T> {
-            var current = node
-            while (current.left != null) {
-                current = current.left!!
-            }
-            return current
-        }
 
         private fun maxInBranch(node: Node<T>): Node<T> {
             var current = node
