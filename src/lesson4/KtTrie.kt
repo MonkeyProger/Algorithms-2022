@@ -105,14 +105,19 @@ class KtTrie : AbstractMutableSet<String>(), MutableSet<String> {
             removeFlag = true
             if (index >= size) throw NoSuchElementException()
             previousPos = curPos
-            if (index == 0) curPos = wordInBranchWithSave(curPos) else nextPos()
+            if (index == 0) {
+                word = ""
+                forkDeque.clear()
+                prefixDeque.clear()
+                curPos = wordInBranchWithSave(curPos)
+            } else nextPos()
             return word
         }
 
         private fun nextPos() {
-            word = prefixDeque.first
             val prev: Node
             if (forkDeque.isEmpty()) return
+            word = prefixDeque.first
             if (curPos == forkDeque.first.first.children.values.first()) {
                 prev = forkDeque.first.first
                 val pair = nextChildInNode(prev, forkDeque.first.second)
@@ -199,7 +204,12 @@ class KtTrie : AbstractMutableSet<String>(), MutableSet<String> {
                 val keyToSwap = prevChildInNode(topNode, keyToRemove)
                 topNode.children.remove(keyToRemove.toChar())
                 forkDeque.pop()
-                if (topNode.children.size > 1) forkDeque.push(topNode to keyToSwap)
+                if (topNode.children.size > 1) forkDeque.push(topNode to keyToSwap) else
+                    prefixDeque.pop()
+                if (keyToRemove == keyToSwap && forkDeque.isNotEmpty()) {
+                    val backup = forkDeque.pop()
+                    forkDeque.push(backup.first to backup.second - 1)
+                }
                 previousPos
             }
             index--
