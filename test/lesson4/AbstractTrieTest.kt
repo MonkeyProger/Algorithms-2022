@@ -112,6 +112,40 @@ abstract class AbstractTrieTest {
         }
     }
 
+    protected fun myTest() {
+        var el: String
+        val trieSet = create()
+        trieSet.add("a")
+        trieSet.add("ab")
+        trieSet.add("acc")
+        trieSet.add("b")
+        trieSet.add("ba")
+        trieSet.add("caa")
+        trieSet.add("cab")
+        trieSet.add("cba")
+        trieSet.add("cbb")
+        println("Before removing:")
+        val itr = trieSet.iterator()
+        while (itr.hasNext()) {
+            println(itr.next())
+        }
+        println("Deleting node:")
+        val remIt = trieSet.iterator()
+        val elToRemove = setOf("a", "acc", "b", "caa", "cbb")
+        while (remIt.hasNext()) {
+            el = remIt.next()
+            if (elToRemove.contains(el)) {
+                remIt.remove()
+                println(el)
+            }
+        }
+        println("After removing:")
+        val newIt = trieSet.iterator()
+        while (newIt.hasNext()) {
+            println(newIt.next())
+        }
+    }
+
     protected fun doIteratorRemoveTest() {
         implementationTest { create().iterator().remove() }
         val random = Random()
