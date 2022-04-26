@@ -177,4 +177,18 @@ abstract class AbstractOpenAddressingSetTest {
             println("All clear!")
         }
     }
+
+    protected fun doCustomTest() {
+        val openAddressingSet = create<Int>(16)
+        assertFalse(openAddressingSet.remove(10), "Removing from empty set must return false")
+        for (i in 4..12) openAddressingSet.add(i)
+        val iter = openAddressingSet.iterator()
+        val toRemove = arrayOf(4, 5, 8, 12)
+        while (iter.hasNext()){
+            val cur = iter.next()
+            if (toRemove.contains(cur)) iter.remove()
+        }
+        val postIter = openAddressingSet.iterator()
+        while (postIter.hasNext()) println(postIter.next())
+    }
 }

@@ -32,4 +32,9 @@ class KtOpenAddressingSetTest : AbstractOpenAddressingSetTest() {
     fun iteratorRemoveTest() {
         doIteratorRemoveTest()
     }
+
+    @Test
+    fun myTest(){
+        doCustomTest()
+    }
 }

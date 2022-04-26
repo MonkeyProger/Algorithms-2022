@@ -1,8 +1,6 @@
 package lesson5
 
-import lesson4.KtTrie
 import java.lang.IllegalStateException
-import java.util.ArrayDeque
 import java.util.NoSuchElementException
 
 /**
@@ -58,7 +56,7 @@ class KtOpenAddressingSet<T : Any>(private val bits: Int) : AbstractMutableSet<T
         val startingIndex = element.startingIndex()
         var index = startingIndex
         var current = storage[index]
-        if (size == capacity) return false
+        if (size == capacity) throw IllegalStateException()
         while (current != null && current != empty) {
             if (current == element) return false
             index = (index + 1) % capacity
@@ -81,6 +79,8 @@ class KtOpenAddressingSet<T : Any>(private val bits: Int) : AbstractMutableSet<T
      *
      * Средняя
      */
+    // * T(n) = O(1)
+    // * R(n) = O(1)
     override fun remove(element: T): Boolean {
         val startingIndex = element.startingIndex()
         var index = startingIndex
@@ -109,6 +109,7 @@ class KtOpenAddressingSet<T : Any>(private val bits: Int) : AbstractMutableSet<T
      * Средняя (сложная, если поддержан и remove тоже)
      */
     override fun iterator(): MutableIterator<T> = OASetIterator()
+
     inner class OASetIterator internal constructor() : MutableIterator<T> {
         private val arrIterator = storage.iterator()
         private var index = -1
@@ -123,6 +124,8 @@ class KtOpenAddressingSet<T : Any>(private val bits: Int) : AbstractMutableSet<T
             return true
         }
 
+        // * T(n) = O(1)
+        // * T(n) = O(1)
         override fun next(): T {
             index++
             removeFlag = true
@@ -137,16 +140,16 @@ class KtOpenAddressingSet<T : Any>(private val bits: Int) : AbstractMutableSet<T
             return curPos as T
         }
 
+        // * T(n) = O(1)
+        // * R(n) = O(1)
         override fun remove() {
             if (!removeFlag) throw IllegalStateException()
             curPos = prevPos
             storage[globlIndex] = empty
             removeFlag = false
-            globlIndex--
             index--
             size--
         }
-
     }
 
 }
