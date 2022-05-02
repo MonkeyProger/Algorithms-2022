@@ -34,4 +34,14 @@ class GraphTestsKotlin : AbstractGraphTests() {
     fun testBaldaSearcher() {
         baldaSearcher { inputName, words -> baldaSearcher(inputName, words) }
     }
+
+    @Test
+    fun customLongestSimPathTests(){
+        myTest1()
+    }
+
+    @Test
+    fun customLargestIndVertSetTests() {
+        myTest2()
+    }
 }

@@ -124,8 +124,9 @@ class KtOpenAddressingSet<T : Any>(private val bits: Int) : AbstractMutableSet<T
             return true
         }
 
-        // * T(n) = O(1)
-        // * T(n) = O(1)
+        // * T(n) = O(n)
+        // * При полном прохождении дерева операция занимает O(n)
+        // * R(n) = O(1)
         override fun next(): T {
             index++
             removeFlag = true

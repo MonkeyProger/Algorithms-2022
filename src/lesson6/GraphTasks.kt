@@ -2,6 +2,8 @@
 
 package lesson6
 
+import java.lang.IllegalArgumentException
+
 /**
  * Эйлеров цикл.
  * Средняя
@@ -88,8 +90,100 @@ fun Graph.minimumSpanningTree(): Graph {
  *
  * Если на входе граф с циклами, бросить IllegalArgumentException
  */
+
+// * T(n) = O(n)
+// * Первый цикл по вершинам проверяет наличие цикла, а также разбивает граф,
+//   если он имеет отдельные несвязанные ветки, результат деления находится в parts. Операция занимает O(n)
+//   Получив ветку, её узлы отбрасываются и дальше проверяются узлы из следующей части(если имеются).
+// * Второй цикл по полученным частям находит для каждой максимальное нез. множество:
+//   достаточно проверить в ветке множества относительно двух соседних элементов, поэтому при проходе
+//   составляются два множества для первого и второго соответсвенно, после чего берется большее из них.
+//   Такой поиск основан на поиске в глубину, трудоемкость составляет O(n).
+// * R(n) = O(n)
 fun Graph.largestIndependentVertexSet(): Set<Graph.Vertex> {
-    TODO()
+    val parts = mutableListOf<HashSet<Graph.Vertex>>()
+    val res = mutableSetOf<Graph.Vertex>()
+
+    if (this.vertices.isEmpty()) return setOf()
+    val nVisited = this.vertices as HashSet<Graph.Vertex>
+    val parDeque = ArrayDeque<Graph.Vertex>()
+    val visited = HashSet<Graph.Vertex>()
+    for (i in this.vertices) {
+        if (!nVisited.contains(i)) continue
+        nVisited.remove(i)
+        visited.add(i)
+        parDeque.addFirst(i)
+        val cycleRes = dfCycleSearch(this, this.getConnections(i), nVisited, visited, parDeque)
+        if (cycleRes.second) throw IllegalArgumentException() else {
+            parts.add(visited.clone() as HashSet<Graph.Vertex>)
+            visited.clear()
+            parDeque.clear()
+        }
+    }
+
+    for (i in parts) {
+        val set = mutableSetOf<Graph.Vertex>()
+        val invSet = mutableSetOf<Graph.Vertex>()
+        val el = i.first()
+        val connections = this.getConnections(el)
+        val flag = true
+
+        set.add(el)
+        val parDeque = ArrayDeque<Graph.Vertex>()
+        parDeque.add(el)
+        buildSets(this, connections, set, invSet, parDeque, flag)
+        res += if (set.size >= invSet.size) set else invSet
+    }
+    return res
+}
+
+fun dfCycleSearch(
+    graph: Graph,
+    connections: Map<Graph.Vertex, Graph.Edge>,
+    nVisited: HashSet<Graph.Vertex>,
+    visited: HashSet<Graph.Vertex>,
+    parDeque: ArrayDeque<Graph.Vertex>
+): Pair<HashSet<Graph.Vertex>, Boolean> {
+    var flag = false
+    val newDeque = ArrayDeque<Graph.Vertex>()
+    newDeque.addAll(parDeque)
+    for ((vertex, _) in connections) {
+        if (newDeque.first() == vertex) {
+            newDeque.removeFirst()
+            continue
+        }
+        if (!nVisited.contains(vertex)) return visited to true
+        nVisited.remove(vertex)
+        visited.add(vertex)
+        newDeque.addLast(vertex)
+        flag = dfCycleSearch(graph, graph.getConnections(vertex), nVisited, visited, newDeque).second
+        newDeque.removeLast()
+        if (flag) break
+    }
+    return visited to flag
+}
+
+fun buildSets(
+    graph: Graph,
+    connections: Map<Graph.Vertex, Graph.Edge>,
+    set: MutableSet<Graph.Vertex>,
+    invSet: MutableSet<Graph.Vertex>,
+    parDeque: ArrayDeque<Graph.Vertex>,
+    flag: Boolean
+) {
+    val newDeque = ArrayDeque<Graph.Vertex>()
+    newDeque.addAll(parDeque)
+    for ((vertex, _) in connections) {
+        if (newDeque.first() == vertex) {
+            newDeque.removeFirst()
+            continue
+        }
+        if (flag) invSet.add(vertex) else
+            set.add(vertex)
+        newDeque.addLast(vertex)
+        buildSets(graph, graph.getConnections(vertex), set, invSet, newDeque, flag.not())
+        newDeque.removeLast()
+    }
 }
 
 /**
@@ -112,8 +206,54 @@ fun Graph.largestIndependentVertexSet(): Set<Graph.Vertex> {
  *
  * Ответ: A, E, J, K, D, C, H, G, B, F, I
  */
+
+// * T(n) = O(n^2)
+// * Каждый узел проверяется на длиннейший путь,
+//   проверка осуществляется поиском в глубину
+// * R(n) = O(n)
 fun Graph.longestSimplePath(): Path {
-    TODO()
+    val listOfVertix = this.vertices
+    var maxSimplePath = listOf<Graph.Vertex>()
+    for (i in listOfVertix) {
+        var tempPath = mutableListOf<Graph.Vertex>()
+        tempPath.add(i)
+        val connections = this.getConnections(i)
+        tempPath = recursiveSearch(this, connections, tempPath)
+        if (maxSimplePath.size < tempPath.size)
+            maxSimplePath = tempPath
+    }
+    return if (maxSimplePath.size <= 1) Path() else
+        Path(maxSimplePath, maxSimplePath.size - 1)
+}
+
+fun recursiveSearch(
+    graph: Graph,
+    connections: Map<Graph.Vertex, Graph.Edge>,
+    tempPath: MutableList<Graph.Vertex>
+): MutableList<Graph.Vertex> {
+    var maxSimplePath = mutableListOf<Graph.Vertex>()
+    var res = mutableListOf<Graph.Vertex>()
+    for ((vertex, _) in connections) {
+        res.clear()
+        res.addAll(tempPath)
+        if (res.contains(vertex)) continue
+        res.add(vertex)
+        val check = res.size
+        res = recursiveSearch(graph, graph.getConnections(vertex), res)
+        if (maxSimplePath.size < res.size) {
+            maxSimplePath.clear()
+            maxSimplePath.addAll(res)
+        }
+        if (check == res.size) {
+            res.remove(vertex)
+            continue
+        }
+    }
+    if (maxSimplePath.size < res.size) {
+        maxSimplePath.clear()
+        maxSimplePath.addAll(res)
+    }
+    return maxSimplePath
 }
 
 /**

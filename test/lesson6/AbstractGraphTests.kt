@@ -1,7 +1,9 @@
 package lesson6
 
 import lesson6.impl.GraphBuilder
+import java.lang.IllegalArgumentException
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 abstract class AbstractGraphTests {
@@ -378,4 +380,91 @@ abstract class AbstractGraphTests {
             )
         )
     }
+
+    fun myTest1() {
+        val graph = GraphBuilder().apply {
+            val a = addVertex("A")
+            val b = addVertex("B")
+            val c = addVertex("C")
+            val d = addVertex("D")
+            val e = addVertex("E")
+            val h = addVertex("H")
+            addConnection(a, b)
+            addConnection(b, c)
+            addConnection(c, d)
+            addConnection(c, h)
+            addConnection(h, e)
+            addConnection(c, e)
+        }.build()
+        assertEquals(4, graph.longestSimplePath().length)
+    }
+
+    fun myTest2() {
+        val cycleGraph = GraphBuilder().apply {
+            val a = addVertex("A")
+            val b = addVertex("B")
+            val c = addVertex("C")
+            addConnection(a, b)
+            addConnection(b, c)
+            addConnection(a, c)
+        }.build()
+        assertFailsWith<IllegalArgumentException> { cycleGraph.largestIndependentVertexSet() }
+
+        val cycleDividedGraph = GraphBuilder().apply {
+            val a = addVertex("A")
+            val b = addVertex("B")
+            val c = addVertex("C")
+            val d = addVertex("D")
+            val e = addVertex("E")
+            val f = addVertex("F")
+            addConnection(a, b)
+            addConnection(b, c)
+            addConnection(d, e)
+            addConnection(e, f)
+            addConnection(f, d)
+        }.build()
+        assertFailsWith<IllegalArgumentException> { cycleDividedGraph.largestIndependentVertexSet() }
+
+        val graph = GraphBuilder().apply {
+            val a = addVertex("A")
+            val b = addVertex("B")
+            val c = addVertex("C")
+            val d = addVertex("D")
+            val e = addVertex("E")
+            addConnection(a, b)
+            addConnection(b, c)
+            addConnection(b, e)
+            addConnection(c, d)
+        }.build()
+        assertEquals(setOf(graph["A"], graph["C"], graph["E"]), graph.largestIndependentVertexSet())
+
+        val dividedGraph = GraphBuilder().apply {
+            val a = addVertex("A")
+            val b = addVertex("B")
+            val c = addVertex("C")
+            val d = addVertex("D")
+            val e = addVertex("E")
+            val f = addVertex("F")
+            val y = addVertex("Y")
+            val x = addVertex("X")
+            val z = addVertex("Z")
+            addConnection(a, b)
+            addConnection(b, c)
+
+            addConnection(d, e)
+            addConnection(e, f)
+
+            addConnection(y, x)
+            addConnection(y, z)
+        }.build()
+        assertEquals(
+            setOf(
+                dividedGraph["A"], dividedGraph["C"],
+                dividedGraph["D"], dividedGraph["F"],
+                dividedGraph["X"], dividedGraph["Z"]
+            ),
+            dividedGraph.largestIndependentVertexSet()
+        )
+    }
+
 }
