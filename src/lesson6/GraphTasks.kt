@@ -91,7 +91,7 @@ fun Graph.minimumSpanningTree(): Graph {
  * Если на входе граф с циклами, бросить IllegalArgumentException
  */
 
-// * T(n) = O(n)
+// * T(n) = O(V)
 // * Первый цикл по вершинам проверяет наличие цикла, а также разбивает граф,
 //   если он имеет отдельные несвязанные ветки, результат деления находится в parts. Операция занимает O(n)
 //   Получив ветку, её узлы отбрасываются и дальше проверяются узлы из следующей части(если имеются).
@@ -99,7 +99,7 @@ fun Graph.minimumSpanningTree(): Graph {
 //   достаточно проверить в ветке множества относительно двух соседних элементов, поэтому при проходе
 //   составляются два множества для первого и второго соответсвенно, после чего берется большее из них.
 //   Такой поиск основан на поиске в глубину, трудоемкость составляет O(n).
-// * R(n) = O(n)
+// * R(n) = O(V)
 fun Graph.largestIndependentVertexSet(): Set<Graph.Vertex> {
     val parts = mutableListOf<HashSet<Graph.Vertex>>()
     val res = mutableSetOf<Graph.Vertex>()
@@ -207,10 +207,10 @@ fun buildSets(
  * Ответ: A, E, J, K, D, C, H, G, B, F, I
  */
 
-// * T(n) = O(n^2)
+// * T(n) = O(V*(V+E))
 // * Каждый узел проверяется на длиннейший путь,
-//   проверка осуществляется поиском в глубину
-// * R(n) = O(n)
+//   проверка осуществляется поиском в глубину(время выполнения которого O(V+E))
+// * R(n) = O(V)
 fun Graph.longestSimplePath(): Path {
     val listOfVertix = this.vertices
     var maxSimplePath = listOf<Graph.Vertex>()
